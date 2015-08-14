@@ -1,0 +1,14 @@
+---
+Name: gridsheet-config
+---
+Injector:
+  GridFieldDetailForm: GridSheetDetailForm
+  GridFieldDetailForm_ItemRequest: GridSheetDetailForm_ItemRequest
+GridSheetModelExtension:
+  default_field_specs:
+    Title:
+      title: 'Title'
+      field: 'TextField'
+ModelAdmin:
+  extensions:
+    - GridSheetModelAdminExtension

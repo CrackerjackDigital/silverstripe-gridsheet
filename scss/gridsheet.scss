@@ -1,0 +1,20 @@
+.gridsheet {
+    button {
+        &.ss-gridsheet-add-new-inline {
+            margin-bottom: 1em;
+        }
+    }
+    table.ss-gridfield-table {
+        tbody {
+            td {
+                &[data-visibility="hidden"] {
+                    visibility: hidden;
+                    width: 0;
+                    overflow: hidden;
+                    padding: 0;
+                    border: none;
+                }
+            }
+        }
+    }
+}

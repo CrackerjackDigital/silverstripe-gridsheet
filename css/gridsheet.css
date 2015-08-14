@@ -1,0 +1,12 @@
+/* line 3, ../scss/gridsheet.scss */
+.gridsheet button.ss-gridsheet-add-new-inline {
+  margin-bottom: 1em;
+}
+/* line 10, ../scss/gridsheet.scss */
+.gridsheet table.ss-gridfield-table tbody td[data-visibility="hidden"] {
+  visibility: hidden;
+  width: 0;
+  overflow: hidden;
+  padding: 0;
+  border: none;
+}

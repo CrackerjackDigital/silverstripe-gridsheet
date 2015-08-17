@@ -9,7 +9,7 @@
  *   - An array with a `callback` key pointing to a function which returns the field.
  *   - An array with a `field` key->response specifying the field class to use.
  */
-class GridSheetEditableColumns extends GridSheetDataColumns implements
+class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
     GridField_HTMLProvider,
     GridField_SaveHandler,
     GridField_URLHandler

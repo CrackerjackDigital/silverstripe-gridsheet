@@ -21,7 +21,7 @@ class GridSheetModelAdmin extends ModelAdmin {
             ->removeComponent('GridFieldItemEditForm')
             ->addComponent('GridSheetItemEditForm');
 
-        $gridField = new GridField(
+        $gridField = GridField::create(
             $this->sanitiseClassName($this->modelClass),
             false,
             $list,

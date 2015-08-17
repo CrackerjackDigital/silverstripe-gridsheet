@@ -2,11 +2,16 @@
 Name: gridsheet-config
 ---
 Injector:
-  GridSheetAddNewComponent: GridSheetAddNewInlineButton
-  GridSheetEditableColumnComponent: GridSheetEditableColumns
-  GridField: GridSheet
-  GridFieldDetailForm: GridSheetDetailForm
-  GridFieldDetailForm_ItemRequest: GridSheetDetailForm_ItemRequest
+  GridSheetAddNewComponent:
+    class: GridSheetAddNewInlineButton
+  GridSheetEditableColumnsComponent:
+    class: GridSheetEditableColumnsComponent
+  GridField:
+    class: GridSheet
+  GridFieldDetailForm:
+    class: GridSheetDetailForm
+  GridFieldDetailForm_ItemRequest:
+    class: GridSheetDetailForm_ItemRequest
 GridSheetModelExtension:
   default_field_specs:
     Title:

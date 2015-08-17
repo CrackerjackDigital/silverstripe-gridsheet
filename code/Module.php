@@ -22,100 +22,89 @@ class GridSheetModule extends CrackerjackModule {
      * @throws Exception
      */
     public static function save_new_rows(GridField $gridField, DataObject $relatedModel = null) {
-        $modelClass = $gridField->getModelClass();
-        $list = $gridField->getList();
+        $rows = self::component_row_data($gridField, get_class(self::add_new_component())) ?: array();
 
-        $template = array();
+        if ($rows) {
 
-        if ($relatedModel) {
-            $relatedKeyName = $relatedModel->getRemoteJoinField($modelClass);
+            $modelClass = $gridField->getModelClass();
+            $list = $gridField->getList();
 
-            $template += array(
-                $relatedKeyName => $relatedModel->ID
-            );
-        }
+            $template = array();
 
-        $rows = self::row_data($gridField, self::add_new_component()->class) ?: array();
+            if ($relatedModel) {
+                $relatedKeyName = $relatedModel->getRemoteJoinField($modelClass);
 
-        return array_filter(
-            array_map(
-                function($row) use ($modelClass, $template, $list) {
-                    $model = $modelClass::create($template);
+                $template += array(
+                    $relatedKeyName => $relatedModel->ID
+                );
+            }
 
-                    if (array_filter(
-                        $model->extend('gridSheetHandleNewRow', $row)
-                    )) {
+            return array_filter(
+                array_map(
+                    function ($row) use ($modelClass, $template, $list) {
+                        $model = $modelClass::create($template);
+
+                        $model->extend('gridSheetHandleNewRow', $row);
                         $model->write();
 
                         $list->add($model);
 
                         return true;
-                    }
-                    return false;
-                },
-                $rows
-            )
-        );
+                    },
+                    $rows
+                )
+            );
+        }
     }
 
     public static function save_existing_rows(GridField $gridField, DataObject $relatedModel = null) {
-        $modelClass = $gridField->getModelClass();
-        $list = $gridField->getList();
+        $rows = self::component_row_data($gridField, get_class(self::editable_columns_component())) ?: array();
 
-        $rows = self::row_data($gridField, self::editable_columns_component()->class) ?: array();
+        if ($rows) {
 
-        $template = array();
+            $modelClass = $gridField->getModelClass();
+            $list = $gridField->getList();
 
-        if ($relatedModel) {
-            $relatedKeyName = $relatedModel->getRemoteJoinField($modelClass);
+            $template = array();
 
-            $template += array(
-                $relatedKeyName => $relatedModel->ID
-            );
-        }
+            if ($relatedModel) {
+                $relatedKeyName = $relatedModel->getRemoteJoinField($modelClass);
 
-        return array_filter(
-            array_map(
-                function($id, $row) use ($modelClass, $list, $template) {
-                    /** @var DataObject $model */
-                    if (!$model = $list->find('ID', $id)) {
-                        throw new GridSheetException("No such '$modelClass' with id '$id'");
-                    }
+                $template += array(
+                    $relatedKeyName => $relatedModel->ID
+                );
+            }
+            $names = array_keys($rows);
+            $values = array_values($rows);
 
-                    $model->update($template);
+            return array_filter(
+                array_map(
+                    function($id, $row) use ($modelClass, $list, $template) {
+                        /** @var DataObject $model */
+                        if (!$model = $list->find('ID', $id)) {
+                            throw new GridSheetException("No such '$modelClass' with id '$id'");
+                        }
 
-                    if (array_filter(
-                        $model->extend('gridSheetHandleExisitingRow', $row)
-                    )) {
+                        $model->extend('gridSheetHandleExistingRow', $row);
                         $model->write();
 
                         $list->add($model);
 
                         return true;
-                    }
-                    return false;
-                },
-                array_keys($rows),
-                array_values($rows)
-            )
-        );
-
+                    },
+                    $names,
+                    $values
+                )
+            );
+        }
 
     }
 
-    private static function row_data(GridField $gridField, Form $form, $gridComponentClass) {
-        $modelClass = $gridField->getModelClass();
+    private static function component_row_data(GridField $gridField, $gridComponentClass) {
+        if ($gridField->getConfig()->getComponentByType($gridComponentClass)) {
+            $gridData = $gridField->Value();
 
-        if ($gridField = $form->Fields()->fieldByName($modelClass)) {
-
-            if ($gridField instanceof GridField) {
-
-                if ($gridField->getConfig()->getComponentByType($gridComponentClass)) {
-                    $gridData = $gridField->Value();
-
-                    return $gridData[$gridComponentClass];
-                }
-            }
+            return isset($gridData[$gridComponentClass]) ? $gridData[$gridComponentClass] : array();
         }
     }
 }

@@ -2,7 +2,7 @@
 abstract class GridSheetModelExtension extends CrackerJackDataExtension
     implements GridSheetExtensionInterface
 {
-    const DefaultEditableColumnsClass = 'GridSheetEditableColumns';
+    const DefaultEditableColumnsClass = 'GridSheetEditableColumnsComponent';
 
     // set in derived class to name of class to show in grid field
     const ModelClass = '';
@@ -139,7 +139,7 @@ abstract class GridSheetModelExtension extends CrackerJackDataExtension
 
         if (static::get_config_setting('enable_add_new_inline')) {
             $config->removeComponentsByType('GridFieldAddNewButton');
-            $config->addComponent(GridSheetModule::editable_columns_component());
+            $config->addComponent(GridSheetModule::add_new_component());
         }
 
         return $config;

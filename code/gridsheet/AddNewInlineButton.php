@@ -10,7 +10,7 @@ class GridSheetAddNewInlineButton extends GridFieldAddNewInlineButton {
 
         $fragment = $this->getFragment();
 
-        if(!$editable = $grid->getConfig()->getComponentByType('GridSheetEditableColumns')) {
+        if(!$editable = $grid->getConfig()->getComponentByType(GridSheetModule::editable_columns_component()->class)) {
             throw new Exception('Inline adding requires the editable columns component');
         }
 

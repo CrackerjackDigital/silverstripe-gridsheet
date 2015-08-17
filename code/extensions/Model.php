@@ -61,69 +61,6 @@ abstract class GridSheetModelExtension extends CrackerJackDataExtension
         }
     }
 
-    protected function defaultSaveAddNewInlineColumns(GridField $gridField, array $data) {
-        $modelClass = $gridField->getModelClass();
-
-        if (static::ModelClass == $modelClass || static::RelatedModelClass == $modelClass) {
-            if ($gridField->getConfig()->getComponentByType('GridSheetAddNewInlineButton')) {
-                $value = $gridField->Value();
-
-                if (isset($value['GridSheetAddNewInlineButton'])) {
-                    $list = $gridField->getList();
-                    if (!$list) {
-                        $list = new ArrayList();
-                        $gridField->setList($list);
-                    }
-
-                    foreach ($value['GridSheetAddNewInlineButton'] as $index => &$record) {
-                        if ($updateColumns = $this->getUpdateColumns($modelClass, $record)) {
-
-                            /** @var DataObject $model */
-                            $model = $modelClass::create($record);
-                            $model->write(false, true);
-
-                            $list->add($model);
-                        }
-
-                    }
-                }
-            }
-        }
-    }
-
-    protected function defaultSaveEditableColumns(GridField $gridField, array $data) {
-        $modelClass = $gridField->getModelClass();
-
-        if (static::ModelClass == $modelClass || static::RelatedModelClass == $modelClass) {
-
-
-            if ($gridField->getConfig()->getComponentByType('GridSheetEditableColumns')) {
-                $value = $gridField->Value();
-
-                if (isset($value['GridSheetEditableColumns'])) {
-                    $list = $gridField->getList();
-                    if (!$list) {
-                        $list = new ArrayList();
-                        $gridField->setList($list);
-                    }
-
-                    foreach ($value['GridSheetEditableColumns'] as $index => &$record) {
-                        if ($updateColumns = $this->getUpdateColumns($modelClass, $record)) {
-
-                            if (!$model = $list->find('ID', $record['ID'])) {
-                                $model = $modelClass::create($updateColumns);
-                            } else {
-                                $model->update($updateColumns);
-                            }
-                            $model->write();
-                            $list->add($model);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     protected function getUpdateColumns($modelClass, array $record) {
         $columns = array();
 
@@ -159,13 +96,13 @@ abstract class GridSheetModelExtension extends CrackerJackDataExtension
     protected function gridSheet($modelClass, $relatedID) {
         $data = $this->gridSheetData($modelClass, $relatedID);
 
-        /** @var GridField $gridField */
+        /** @var GridSheet $gridField */
         $gridField = GridField::create(
             $modelClass,
             $this->fieldLabel(get_class($this), singleton($modelClass)->i18n_plural_name()),
             $data,
             $this->gridSheetConfig($relatedID)
-        )->addExtraClass('gridsheet');
+        );
 
         $gridField->setModelClass($modelClass);
 
@@ -202,7 +139,7 @@ abstract class GridSheetModelExtension extends CrackerJackDataExtension
 
         if (static::get_config_setting('enable_add_new_inline')) {
             $config->removeComponentsByType('GridFieldAddNewButton');
-            $config->addComponent(new GridSheetAddNewInlineButton());
+            $config->addComponent(GridSheetModule::editable_columns_component());
         }
 
         return $config;

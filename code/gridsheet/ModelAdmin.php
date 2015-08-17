@@ -1,5 +1,9 @@
 <?php
 class GridSheetModelAdmin extends ModelAdmin {
+    /**
+     * Expose modelClass as needed by save handler
+     * @return String
+     */
     public function getModelClass() {
         return $this->modelClass;
     }

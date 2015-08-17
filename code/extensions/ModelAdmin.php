@@ -16,17 +16,16 @@ class GridSheetModelAdminExtension extends CrackerJackDataExtension {
         $modelClass = $this->getModelClass();
 
         if (isset($data[$modelClass])) {
-            /** @var GridField $gridField */
             if ($gridField = $form->Fields()->fieldByName($modelClass)) {
                 if ($gridField instanceof GridField) {
 
-                    $model = singleton($modelClass);
+                    GridSheetModule::save_new_rows($gridField);
 
-                    $model->extend('saveAddNewInlineColumns', $gridField, $data);
-
-                    $model->extend('saveEditableColumns', $gridField, $data);
+                    GridSheetModule::save_existing_rows($gridField);
                 }
             }
+        }
+        if (isset($data['BackURL'])) {
             $this->owner->redirect($data['BackURL']);
         }
     }

@@ -18,7 +18,17 @@ interface GridSheetExtensionInterface {
      */
     public function provideRelatedEditableColumns($relatedModelClass, $relatedID, array &$fieldSpecs);
 
-    public function saveAddNewInlineColumns(GridField $gridField, array &$data);
+    /**
+     * Called for each new row in a grid when it is saved.
+     * @param $record
+     * @return bool
+     */
+    public function gridSheetHandleNewRow(array &$record);
 
-    public function saveEditableColumns(GridField $gridField, array &$data);
+    /**
+     * Called to each existing row in a grid when it is saved.
+     * @param $record
+     * @return bool
+     */
+    public function gridSheetHandleExistingRow(array &$record);
 }

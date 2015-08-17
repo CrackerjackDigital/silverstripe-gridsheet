@@ -24,21 +24,12 @@ class GridSheetEditableColumns extends GridSheetDataColumns implements
      * @var Form[]
      */
     protected $forms = array();
-/*
-    public function getEditableColumns() {
-        $fieldSpecs = array();
-        if (method_exists($this->getModelInstance(), 'provideEditableColumns')) {
-            // model itself may provide its own columns so we don't have to write an extension to add them
-            $this->getModelInstance()->provideEditableColumns($fieldSpecs);
-        }
-        $this->getModelInstance()->extend('provideEditableColumns', $fieldSpecs);
-        return $fieldSpecs;
-    }
-*/
+
     public function handleSave(GridField $gridField, DataObjectInterface $record) {
-        $data = $record->toMap();
-        $record->extend('saveAddNewInlineColumns', $gridField, $data);
-        $record->extend('saveEditableColumns', $gridField, $data);
+        GridSheetModule::save_new_rows($gridField);
+
+        GridSheetModule::save_existing_rows($gridField);
+
         $this->save($gridField, $record);
     }
 

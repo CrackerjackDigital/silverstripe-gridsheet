@@ -47,6 +47,10 @@ class GridSheetModule extends CrackerjackModule {
                         $model->extend('gridSheetHandleNewRow', $row);
                         $model->write();
 
+                        if ($model->hasExtension('Versioned')) {
+                            $model->writeToStage('Stage');
+                        }
+
                         $list->add($model);
 
                         return true;
@@ -87,6 +91,10 @@ class GridSheetModule extends CrackerjackModule {
 
                         $model->extend('gridSheetHandleExistingRow', $row);
                         $model->write();
+
+                        if ($model->hasExtension('Versioned')) {
+                            $model->writeToStage('Stage');
+                        }
 
                         $list->add($model);
 

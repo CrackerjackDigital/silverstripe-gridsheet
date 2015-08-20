@@ -154,6 +154,7 @@ class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
             } elseif(is_array($info)) {
                 if(isset($info['callback'])) {
                     $field = call_user_func($info['callback'], $record, $col, $grid);
+
                 } elseif(isset($info['field'])) {
                     if ($info['field'] == 'LiteralField') {
                         $field = new $info['field']($col, null);
@@ -161,13 +162,14 @@ class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
                         $field = new $info['field']($col);
                     }
                 }
-
-                if(!$field instanceof FormField) {
-                    throw new Exception(sprintf(
-                        'The field for column "%s" is not a valid form field',
-                        $col
-                    ));
-                }
+                /*
+                                if(!$field instanceof FormField) {
+                                    throw new Exception(sprintf(
+                                        'The field for column "%s" is not a valid form field',
+                                        $col
+                                    ));
+                                }
+                */
             }
 
             if(!$field && $list instanceof ManyManyList) {

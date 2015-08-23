@@ -18,3 +18,7 @@
         }
     }
 }
+.ModelAdmin .cms-content-fields .cms-edit-form {
+    // force model-admin to scroll horizontally if gridsheet too wide
+    overflow-x: auto!important;
+}

@@ -10,3 +10,8 @@
   padding: 0;
   border: none;
 }
+
+/* line 21, ../scss/gridsheet.scss */
+.ModelAdmin .cms-content-fields .cms-edit-form {
+  overflow-x: auto !important;
+}

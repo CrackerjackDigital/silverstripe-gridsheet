@@ -26,9 +26,9 @@ class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
     protected $forms = array();
 
     public function handleSave(GridField $gridField, DataObjectInterface $record) {
-        GridSheetModule::save_new_rows($gridField);
+        GridSheetModule::save_new_rows($gridField, false);
 
-        GridSheetModule::save_existing_rows($gridField);
+        GridSheetModule::save_existing_rows($gridField, false);
 
         $this->save($gridField, $record);
     }

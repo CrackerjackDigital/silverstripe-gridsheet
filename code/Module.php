@@ -21,7 +21,7 @@ class GridSheetModule extends CrackerjackModule {
      * @return array
      * @throws Exception
      */
-    public static function save_new_rows(GridField $gridField, DataObject $relatedModel = null) {
+    public static function save_new_rows(GridField $gridField, $publish = false, DataObject $relatedModel = null) {
         $rows = self::component_row_data($gridField, get_class(self::add_new_component())) ?: array();
 
         if ($rows) {
@@ -41,7 +41,7 @@ class GridSheetModule extends CrackerjackModule {
 
             return array_filter(
                 array_map(
-                    function ($row) use ($modelClass, $template, $list) {
+                    function ($row) use ($modelClass, $template, $list, $publish) {
                         $model = $modelClass::create($template);
 
                         $model->extend('gridSheetHandleNewRow', $row);
@@ -49,6 +49,10 @@ class GridSheetModule extends CrackerjackModule {
 
                         if ($model->hasExtension('Versioned')) {
                             $model->writeToStage('Stage');
+
+                            if ($publish) {
+                                $model->doPublish();
+                            }
                         }
 
                         $list->add($model);
@@ -61,7 +65,7 @@ class GridSheetModule extends CrackerjackModule {
         }
     }
 
-    public static function save_existing_rows(GridField $gridField, DataObject $relatedModel = null) {
+    public static function save_existing_rows(GridField $gridField, $publish = false, DataObject $relatedModel = null) {
         $rows = self::component_row_data($gridField, get_class(self::editable_columns_component())) ?: array();
 
         if ($rows) {
@@ -83,7 +87,7 @@ class GridSheetModule extends CrackerjackModule {
 
             return array_filter(
                 array_map(
-                    function($id, $row) use ($modelClass, $list, $template) {
+                    function ($id, $row) use ($modelClass, $list, $template, $publish) {
                         /** @var DataObject $model */
                         if (!$model = $list->find('ID', $id)) {
                             throw new GridSheetException("No such '$modelClass' with id '$id'");
@@ -94,6 +98,10 @@ class GridSheetModule extends CrackerjackModule {
 
                         if ($model->hasExtension('Versioned')) {
                             $model->writeToStage('Stage');
+
+                            if ($publish) {
+                                $model->doPublish();
+                            }
                         }
 
                         $list->add($model);
@@ -105,6 +113,11 @@ class GridSheetModule extends CrackerjackModule {
                 )
             );
         }
+
+    }
+
+    public static function publish_rows(GridField $gridField) {
+        $rows = self::component_row_data($gridField, get_class(self::editable_columns_component())) ?: array();
 
     }
 

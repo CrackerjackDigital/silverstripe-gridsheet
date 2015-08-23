@@ -57,6 +57,15 @@ abstract class GridSheetModelExtension extends CrackerJackDataExtension
                         ->addExtraClass('ss-ui-action-constructive ss-ui-button ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary')
                         ->setAttribute('data-icon', 'save')
                 );
+
+                if (singleton($modelClass)->hasExtension('Versioned')) {
+                    $form->Actions()->push(
+                        FormAction::create('saveAndPublishGridSheet', 'Save And Publish')
+                            ->addExtraClass('ss-ui-action-constructive ss-ui-button ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary')
+                            ->setAttribute('data-icon', 'save')
+                    );
+
+                }
             }
         }
     }

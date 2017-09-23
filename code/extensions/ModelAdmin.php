@@ -4,7 +4,7 @@
  * Add to GridSheetModelAdmins which will be dealing with GridSheet enabled models. Can't use ModelAdmin itself because
  * the $modelClass is a protected member variable which we expose via GridSheetModelAdmin.getModelClass().
  */
-class GridSheetModelAdminExtension extends CrackerJackDataExtension {
+class GridSheetModelAdminExtension extends DataExtension {
 
     /**
      * @param array $data

@@ -1,5 +1,5 @@
 <?php
-abstract class GridSheetModelExtension extends CrackerJackDataExtension
+abstract class GridSheetModelExtension extends DataExtension
     implements GridSheetExtensionInterface
 {
     const DefaultEditableColumnsClass = 'GridSheetEditableColumnsComponent';
@@ -13,14 +13,24 @@ abstract class GridSheetModelExtension extends CrackerJackDataExtension
 
     private static $tab_name = 'Root.Main';
 
-    private static $enable_add_new = false;
+	private static $gridsheet_enabled = true;
+
+	private static $enable_add_new = false;
 
     private static $enable_add_new_inline = true;
 
     private static $default_editable_columns_class = self::DefaultEditableColumnsClass;
 
+    public function enabled($set = null) {
+    	$old = $this->owner->config()->get('gridsheet_enabled');
+    	if (!is_null($set)) {
+    		\Config::inst()->update($this->owner->class, 'gridsheet_enabled', $set);
+	    }
+	    return $old;
+    }
+
     public function updateCMSFields(FieldList $fields) {
-        if (static::enabled()) {
+        if ($this->enabled()) {
             $modelClass = $this->getRelatedModelClass();
 
             // don't add a grid to your own form
@@ -41,7 +51,7 @@ abstract class GridSheetModelExtension extends CrackerJackDataExtension
 
 
     public function updateEditForm(Form $form) {
-        if (static::enabled()) {
+        if ($this->enabled()) {
             $modelClass = $this->getModelClass();
             $fields = $form->Fields();
 
@@ -73,9 +83,12 @@ abstract class GridSheetModelExtension extends CrackerJackDataExtension
     protected function getUpdateColumns($modelClass, array $record) {
         $columns = array();
 
-        static::ModelClass == $modelClass
-            ?   $this->provideEditableColumns($columns)
-            :   $this->provideRelatedEditableColumns(static::RelatedModelClass, $record['ID'], $columns);
+        if (static::ModelClass == $modelClass) {
+	        $this->provideEditableColumns( $columns );
+        } else {
+	        $this->provideRelatedEditableColumns( static::RelatedModelClass, $record['ID'], $columns );
+        }
+
 
         $updateColumns = array_intersect_key(
             $record,
@@ -108,7 +121,7 @@ abstract class GridSheetModelExtension extends CrackerJackDataExtension
         /** @var GridSheet $gridField */
         $gridField = GridField::create(
             $modelClass,
-            $this->fieldLabel(get_class($this), singleton($modelClass)->i18n_plural_name()),
+            singleton($modelClass)->i18n_plural_name(),
             $data,
             $this->gridSheetConfig($relatedID)
         );
@@ -119,14 +132,10 @@ abstract class GridSheetModelExtension extends CrackerJackDataExtension
     }
 
     protected function gridSheetData($modelClass, $relatedID) {
-        $maybeData = $this->owner->extend('provideGridSheetData', $modelClass, $relatedID);
+    	$data = new ArrayList();
 
-        $data = array_reduce(
-            $maybeData,
-            function ($prev, $item) {
-                return $prev ?: $item;
-            }
-        );
+        $this->owner->extend('provideGridSheetData', $data, $modelClass, $relatedID);
+
         return $data;
     }
 
@@ -142,11 +151,11 @@ abstract class GridSheetModelExtension extends CrackerJackDataExtension
             ->removeComponentsByType('GridFieldFilterHeader')
             ->addComponent($editableColumns);
 
-        if (!static::get_config_setting('enable_add_new')) {
+        if (!$this->owner->config()->get('enable_add_new')) {
             $config->removeComponentsByType('GridFieldAddNewButton');
         }
 
-        if (static::get_config_setting('enable_add_new_inline')) {
+        if ( $this->owner->config()->get('enable_add_new_inline')) {
             $config->removeComponentsByType('GridFieldAddNewButton');
             $config->addComponent(GridSheetModule::add_new_component());
         }
@@ -162,11 +171,11 @@ abstract class GridSheetModelExtension extends CrackerJackDataExtension
 
         /** @var GridSheetEditableColumns $editableColumns */
         if (!ClassInfo::exists($editableColumnsClass)) {
-            $editableColumnsClass = self::own_config('default_editable_columns_class') ?: self::DefaultEditableColumnsClass;
+            $editableColumnsClass = self::DefaultEditableColumnsClass;
         }
         $editableColumns = $editableColumnsClass::create($this->owner);
 
-        $fieldSpecs = self::own_config('default_field_specs') ?: array();
+        $fieldSpecs = $this->owner->config()->get('gridsheet_field_specs') ?: array();
 
         if ($relatedID) {
             $this->owner->extend('provideRelatedEditableColumns', $relatedModelClass, $relatedID, $fieldSpecs);

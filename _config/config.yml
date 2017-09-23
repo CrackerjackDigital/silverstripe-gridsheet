@@ -1,5 +1,8 @@
 ---
 Name: gridsheet-config
+After:
+  - 'framework/*'
+  - 'cms/*'
 ---
 Injector:
   GridSheetAddNewComponent:

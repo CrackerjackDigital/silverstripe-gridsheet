@@ -18,8 +18,8 @@ class GridSheetModelAdmin extends ModelAdmin {
         $fieldConfig = GridFieldConfig_RecordEditor::create($this->stat('page_length'))
             ->addComponent($buttonAfter)
             ->addComponent($exportButton)
-            ->removeComponent('GridFieldItemEditForm')
-            ->addComponent('GridSheetItemEditForm');
+            ->removeComponentsByType(GridFieldDetailForm::class)
+            ->addComponent(new GridSheetDetailForm());
 
         $gridField = GridField::create(
             $this->sanitiseClassName($this->modelClass),

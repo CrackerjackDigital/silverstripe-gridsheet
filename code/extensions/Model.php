@@ -1,5 +1,5 @@
 <?php
-abstract class GridSheetModelExtension extends CrackerJackDataExtension
+abstract class GridSheetModelExtension extends ModularDataExtension
     implements GridSheetExtensionInterface
 {
     const DefaultEditableColumnsClass = 'GridSheetEditableColumnsComponent';

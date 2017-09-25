@@ -20,6 +20,12 @@
         "composer/installers": "*",
         "silverstripe/framework": "3.x"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/crackerjackdigital/modular"
+        }
+    ],
     "extra": {
         "installer-name": "gridsheet"
     },

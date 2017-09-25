@@ -1,6 +1,6 @@
 <?php
 
-class GridSheetModule extends CrackerjackModule {
+class GridSheetModule extends ModularModule {
 
 
     public static function add_new_component() {

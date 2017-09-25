@@ -31,11 +31,11 @@ class GridSheetModelAdminExtension extends DataExtension {
 
         if (isset($data[$modelClass])) {
             if ($gridField = $form->Fields()->fieldByName($modelClass)) {
-                if ($gridField instanceof GridField) {
+                if ($gridField instanceof GridSheet) {
 
-                    GridSheetModule::save_new_rows($gridField, $publish);
+                    $gridField->saveNewRows($publish);
 
-                    GridSheetModule::save_existing_rows($gridField, $publish);
+                    $gridField->saveExistingRows($publish);
                 }
             }
         }

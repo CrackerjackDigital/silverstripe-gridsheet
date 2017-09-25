@@ -1,6 +1,13 @@
 <?php
 class GridSheetAddNewInlineButton extends GridFieldAddNewInlineButton {
 
+	/**
+	 * @param GridField $grid
+	 *
+	 * @return array
+	 * @throws \Exception
+	 * @throws \UnexpectedValueException
+	 */
     public function getHTMLFragments($grid) {
         $modelInstance = singleton($grid->getModelClass());
 
@@ -10,16 +17,13 @@ class GridSheetAddNewInlineButton extends GridFieldAddNewInlineButton {
 
         $fragment = $this->getFragment();
 
-        $editableClass = GridSheetModule::editable_columns_component()->class;
+        $editableClass = GridSheetEditableColumnsComponent::class;
 
         if(!$editable = $grid->getConfig()->getComponentByType($editableClass)) {
             throw new Exception('Inline adding requires the editable columns component');
         }
 
-        Requirements::javascript(THIRDPARTY_DIR . '/javascript-templates/tmpl.js');
-        Requirements::css('gridsheet/css/gridsheet.css');
-
-        GridFieldExtensions::include_requirements();
+        GridSheet::include_requirements();
 
         $data = new ArrayData(array(
             'Title'  => $this->getTitle(),
@@ -27,10 +31,51 @@ class GridSheetAddNewInlineButton extends GridFieldAddNewInlineButton {
         ));
 
         return array(
-            $fragment => $data->renderWith(__CLASS__),
+            $fragment => $data->renderWith(static::class),
             'after'   => $this->getRowTemplate($grid, $editable)
         );
     }
+
+	public function handleSave( GridField $grid, DataObjectInterface $record ) {
+		$list  = $grid->getList();
+		$value = $grid->Value();
+
+		if ( ! isset( $value[ __CLASS__ ] ) || ! is_array( $value[ __CLASS__ ] ) ) {
+			return;
+		}
+
+		$class = $grid->getModelClass();
+		/** @var GridFieldEditableColumns $editable */
+		$editable = $grid->getConfig()->getComponentByType( 'GridFieldEditableColumns' );
+		/** @var GridFieldOrderableRows $sortable */
+		$sortable = $grid->getConfig()->getComponentByType( 'GridFieldOrderableRows' );
+
+		if ( ! singleton( $class )->canCreate() ) {
+			return;
+		}
+
+		foreach ( $value[ __CLASS__ ] as $fields ) {
+			$item  = $class::create();
+			$extra = array();
+
+			$form = $editable->getForm( $grid, $item );
+			$form->loadDataFrom( $fields, Form::MERGE_CLEAR_MISSING );
+			$form->saveInto( $item );
+
+			// Check if we are also sorting these records
+			if ( $sortable ) {
+				$sortField = $sortable->getSortField();
+				$item->setField( $sortField, $fields[ $sortField ] );
+			}
+
+			if ( $list instanceof ManyManyList ) {
+				$extra = array_intersect_key( $form->getData(), (array) $list->getExtraFields() );
+			}
+
+			$item->write();
+			$list->add( $item, $extra );
+		}
+	}
 
     private function getRowTemplate(GridField $grid, GridSheetEditableColumnsComponent $editable) {
         $columns = new ArrayList();

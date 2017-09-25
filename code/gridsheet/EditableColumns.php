@@ -13,11 +13,14 @@
 class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
 	GridField_HTMLProvider,
 	GridField_SaveHandler,
-	GridField_URLHandler {
+	GridField_URLHandler,
+	GridField_ActionProvider
+{
 
 	private static $allowed_actions = array(
 		'handleForm',
 		'handleSave',
+		'saveallrecords'
 	);
 
 	/**
@@ -25,53 +28,34 @@ class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
 	 */
 	protected $forms = array();
 
-	public function handleSave( GridField $gridField, DataObjectInterface $record ) {
-		GridSheetModule::save_new_rows( $gridField, false );
+	public function getActions($gridfield) {
+		return $this->config()->get('allowed_actions');
+	}
 
-		GridSheetModule::save_existing_rows( $gridField, false );
+	public function getURLHandlers( $grid ) {
+		return array(
+			'editable/form/$ID' => 'handleForm',
+		);
+	}
 
-		$this->save( $gridField, $record );
+	public function getHTMLFragments( $grid ) {
+		Requirements::javascript( 'gridsheet/js/gridsheet.js' );
+		$grid->addExtraClass( 'ss-gridfield-editable' );
+	}
+
+	public function handleAction( GridField $gridField, $actionName, $arguments, $data ) {
+		return true;
+
+
 	}
 
 	/**
-	 * Override in implementation to save particular rows if required.
-	 *
-	 * @param GridField           $grid
-	 * @param DataObjectInterface $record
+	 * @param \GridField|\GridSheet           $grid
+	 * @param \DataObjectInterface $record
 	 */
-	protected function save( GridField $grid, DataObjectInterface $record ) {
-		$list  = $grid->getList();
-		$value = $grid->Value();
-
-		if ( ! isset( $value[ __CLASS__ ] ) || ! is_array( $value[ __CLASS__ ] ) ) {
-			return;
-		}
-
-		$form = $this->getForm( $grid, $record );
-
-		foreach ( $value[ __CLASS__ ] as $id => $fields ) {
-			if ( ! is_numeric( $id ) || ! is_array( $fields ) ) {
-				continue;
-			}
-
-			$item = $list->byID( $id );
-
-			if ( ! $item || ! $item->canEdit() ) {
-				continue;
-			}
-
-			$extra = array();
-
-			$form->loadDataFrom( $fields, Form::MERGE_CLEAR_MISSING );
-			$form->saveInto( $item );
-
-			if ( $list instanceof ManyManyList ) {
-				$extra = array_intersect_key( $form->getData(), (array) $list->getExtraFields() );
-			}
-
-			$item->write();
-			$list->add( $item, $extra );
-		}
+	public function handleSave( GridField $grid, DataObjectInterface $record ) {
+		$grid->saveNewRows();
+		$grid->saveExistingRows();
 	}
 
 	public function getColumnContent( $grid, $record, $col ) {
@@ -100,11 +84,6 @@ class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
 		return $field->Field();
 	}
 
-	public function getHTMLFragments( $grid ) {
-		Requirements::javascript( 'gridsheet/js/gridsheet.js' );
-		$grid->addExtraClass( 'ss-gridfield-editable' );
-	}
-
 	public function handleForm( GridField $grid, $request ) {
 		$id   = $request->param( 'ID' );
 		$list = $grid->getList();
@@ -125,13 +104,6 @@ class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
 
 		return $form;
 	}
-
-	public function getURLHandlers( $grid ) {
-		return array(
-			'editable/form/$ID' => 'handleForm',
-		);
-	}
-
 	/**
 	 * Gets the field list for a record.
 	 *
@@ -267,7 +239,8 @@ class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
 	 * @param GridField           $grid
 	 * @param DataObjectInterface $record
 	 *
-	 * @return Form
+	 * @return \Form
+	 * @throws \Exception
 	 */
 	public function getForm( GridField $grid, DataObjectInterface $record ) {
 		$fields = $this->getFields( $grid, $record );

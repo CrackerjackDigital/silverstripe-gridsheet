@@ -9,8 +9,6 @@ Injector:
     class: GridSheetAddNewInlineButton
   GridSheetEditableColumnsComponent:
     class: GridSheetEditableColumnsComponent
-  GridField:
-    class: GridSheet
   GridFieldDetailForm:
     class: GridSheetDetailForm
   GridFieldDetailForm_ItemRequest:

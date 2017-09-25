@@ -1,5 +1,5 @@
 {
-    "name": "wakes/silverstripe-gridsheet",
+    "name": "crackerjackdigital/silverstripe-gridsheet",
     "type": "silverstripe-module",
     "description": "GridField extension to make grid more like a spreadsheet",
     "homepage": "http://www.crackerjack.net.nz/",

@@ -1,6 +1,5 @@
 <?php
 class GridSheetAddNewInlineButton extends GridFieldAddNewInlineButton {
-
 	/**
 	 * @param GridField $grid
 	 *
@@ -23,8 +22,6 @@ class GridSheetAddNewInlineButton extends GridFieldAddNewInlineButton {
             throw new Exception('Inline adding requires the editable columns component');
         }
 
-        GridSheet::include_requirements();
-
         $data = new ArrayData(array(
             'Title'  => $this->getTitle(),
             'SingularName' => $modelInstance->i18n_singular_name()
@@ -37,44 +34,7 @@ class GridSheetAddNewInlineButton extends GridFieldAddNewInlineButton {
     }
 
 	public function handleSave( GridField $grid, DataObjectInterface $record ) {
-		$list  = $grid->getList();
-		$value = $grid->Value();
-
-		if ( ! isset( $value[ __CLASS__ ] ) || ! is_array( $value[ __CLASS__ ] ) ) {
-			return;
-		}
-
-		$class = $grid->getModelClass();
-		/** @var GridFieldEditableColumns $editable */
-		$editable = $grid->getConfig()->getComponentByType( 'GridFieldEditableColumns' );
-		/** @var GridFieldOrderableRows $sortable */
-		$sortable = $grid->getConfig()->getComponentByType( 'GridFieldOrderableRows' );
-
-		if ( ! singleton( $class )->canCreate() ) {
-			return;
-		}
-
-		foreach ( $value[ __CLASS__ ] as $fields ) {
-			$item  = $class::create();
-			$extra = array();
-
-			$form = $editable->getForm( $grid, $item );
-			$form->loadDataFrom( $fields, Form::MERGE_CLEAR_MISSING );
-			$form->saveInto( $item );
-
-			// Check if we are also sorting these records
-			if ( $sortable ) {
-				$sortField = $sortable->getSortField();
-				$item->setField( $sortField, $fields[ $sortField ] );
-			}
-
-			if ( $list instanceof ManyManyList ) {
-				$extra = array_intersect_key( $form->getData(), (array) $list->getExtraFields() );
-			}
-
-			$item->write();
-			$list->add( $item, $extra );
-		}
+    	return;
 	}
 
     private function getRowTemplate(GridField $grid, GridSheetEditableColumnsComponent $editable) {

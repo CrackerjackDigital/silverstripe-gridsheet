@@ -13,14 +13,12 @@
 class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
 	GridField_HTMLProvider,
 	GridField_SaveHandler,
-	GridField_URLHandler,
-	GridField_ActionProvider
-{
+	GridField_URLHandler {
 
 	private static $allowed_actions = array(
 		'handleForm',
 		'handleSave',
-		'saveallrecords'
+		'save',
 	);
 
 	/**
@@ -28,14 +26,10 @@ class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
 	 */
 	protected $forms = array();
 
-	public function getActions($gridfield) {
-		return $this->config()->get('allowed_actions');
-	}
-
-	public function getURLHandlers( $grid ) {
-		return array(
-			'editable/form/$ID' => 'handleForm',
-		);
+	public function getURLHandlers( $gridField ) {
+		return [
+			'POST /' => 'save',
+		];
 	}
 
 	public function getHTMLFragments( $grid ) {
@@ -43,19 +37,185 @@ class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
 		$grid->addExtraClass( 'ss-gridfield-editable' );
 	}
 
-	public function handleAction( GridField $gridField, $actionName, $arguments, $data ) {
-		return true;
+	/**
+	 * @param \GridField|\GridSheet $grid
+	 * @param \SS_HTTPRequest       $request
+	 *
+	 * @throws \LogicException
+	 */
+	public function save( GridField $grid, SS_HTTPRequest $request ) {
+		$data = $request->postVars();
 
+		if ( isset( $data[ $grid->Name ] ) ) {
+			$currValue = $grid->Value();
+			$grid->setValue( $data[ $grid->Name ] );
 
+			/** @var DataObject $model */
+			$model = singleton( $grid->getModelClass() );
+
+			foreach ( $grid->getConfig()->getComponents() as $component ) {
+				if ( $component instanceof GridField_SaveHandler ) {
+					// will call back to this component
+					$component->handleSave( $grid, $model );
+				}
+			}
+
+			$grid->setValue( $currValue );
+
+			if ( Controller::curr() && $response = Controller::curr()->getResponse() ) {
+				$response->addHeader( 'X-Status', rawurlencode( _t( 'GridSheet.DONE', 'Done.' ) ) );
+			}
+		}
 	}
 
 	/**
-	 * @param \GridField|\GridSheet           $grid
-	 * @param \DataObjectInterface $record
+	 * @param \GridField|\GridSheet $grid
+	 * @param \DataObjectInterface  $model
+	 *
 	 */
-	public function handleSave( GridField $grid, DataObjectInterface $record ) {
-		$grid->saveNewRows();
-		$grid->saveExistingRows();
+	public function handleSave( GridField $grid, DataObjectInterface $model ) {
+		$data = $grid->Value();
+		if ( isset( $data[ GridSheetAddNewInlineButton::class ] ) ) {
+			$this->saveNewRows( $grid, $data[ GridSheetAddNewInlineButton::class ], get_class( $model ) );
+		}
+		$this->saveExistingRows( $grid, $model );
+	}
+
+	/**
+	 * @param GridField $grid
+	 * @param           $rows
+	 * @param           $modelClass
+	 *
+	 * @return array
+	 */
+	public function saveNewRows( GridField $grid, array &$rows, $modelClass ) {
+		$list = $grid->getList();
+
+		/** @var GridFieldOrderableRows $sortable */
+		$sortable = $grid->getConfig()->getComponentByType( 'GridFieldOrderableRows' );
+
+		// put any init data here for model fields when one is created
+		$template = [];
+
+		return array_filter(
+			array_map(
+				function ( $row ) use ( $grid, $modelClass, $template, $list, $sortable ) {
+					if ( ! isset( $row['ID'] ) ) {
+						/** @var \DataObject $model */
+						$model = $modelClass::create( $template );
+						if ($model->canCreate()) {
+
+							$this->gridSheetHandleNewRow( $grid, $model, $row );
+
+							// Check if we are also sorting these records
+							if ( $sortable ) {
+								$sortField = $sortable->getSortField();
+								$model->setField( $sortField, $row[ $sortField ] );
+							}
+							$model->write();
+
+							$extra = ( $list instanceof ManyManyList )
+								? array_intersect_key( $row, (array) $list->getExtraFields() )
+								: [];
+
+							$list->add( $model, $extra );
+
+							return true;
+						}
+					}
+				},
+				$rows
+			)
+		);
+	}
+
+	/**
+	 * Called for each new row in a grid when it is saved.
+	 *
+	 * @param \GridField $grid
+	 * @param DataObject $model
+	 * @param array      $row
+	 *
+	 * @throws \Exception
+	 * @internal param array $record
+	 *
+	 */
+	public function gridSheetHandleNewRow( GridField $grid, $model, array &$row ) {
+		$form = $this->getForm( $grid, $model );
+		$form->loadDataFrom( $row, Form::MERGE_CLEAR_MISSING );
+		$form->saveInto( $model );
+	}
+
+	public function saveExistingRows( GridField $grid, $model ) {
+		if ( $rows = $grid->Value() ) {
+
+			$modelClass = $grid->getModelClass();
+			$list       = $grid->getList();
+
+			// put any init data here for model fields when one is updated
+			$template = [];
+
+			$names  = array_keys( $rows );
+			$values = array_values( $rows );
+
+			/** @var GridFieldOrderableRows $sortable */
+			$sortable = $grid->getConfig()->getComponentByType( 'GridFieldOrderableRows' );
+
+			return array_filter(
+				array_map(
+					function ( $id, $row ) use ( $grid, $modelClass, $list, $template, $sortable ) {
+						/** @var DataObject $model */
+						if ( $model = $list->find( 'ID', $id ) ) {
+							if ($model->canEdit()) {
+
+								$row = array_merge(
+									$template,
+									$row
+								);
+								$this->gridSheetHandleExistingRow( $grid, $model, $row );
+
+								// Check if we are also sorting these records
+								if ( $sortable ) {
+									$sortField = $sortable->getSortField();
+									$model->setField( $sortField, $row[ $sortField ] );
+								}
+								if ( $model->isChanged() ) {
+									$model->write();
+								}
+								$extra = ( $list instanceof ManyManyList )
+									? array_intersect_key( $row, (array) $list->getExtraFields() )
+									: [];
+
+								$list->add( $model, $extra );
+								return true;
+							}
+
+						}
+
+					},
+					$names,
+					$values
+				)
+			);
+		}
+	}
+
+	/**
+	 * Called to each existing row in a grid when it is saved.
+	 *
+	 * @param \GridField  $grid
+	 * @param \DataObject $model
+	 * @param array       $row
+	 *
+	 * @return array
+	 * @throws \Exception
+	 * @internal param array $record
+	 *
+	 */
+	public function gridSheetHandleExistingRow( GridField $grid, $model, array &$row ) {
+		$form = $this->getForm( $grid, $model );
+		$form->loadDataFrom( $row, Form::MERGE_CLEAR_MISSING );
+		$form->saveInto( $model );
 	}
 
 	public function getColumnContent( $grid, $record, $col ) {
@@ -104,6 +264,7 @@ class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
 
 		return $form;
 	}
+
 	/**
 	 * Gets the field list for a record.
 	 *
@@ -167,7 +328,7 @@ class GridSheetEditableColumnsComponent extends GridSheetDataColumns implements
 					'Invalid form field instance for column "%s"', $col
 				) );
 			}
-			$field->addExtraClass('editable-column-field');
+			$field->addExtraClass( 'editable-column-field' );
 
 			$fields->push( $field );
 		}
